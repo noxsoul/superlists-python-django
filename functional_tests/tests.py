@@ -5,7 +5,7 @@ import unittest
 
 class NewVisitorTest(LiveServerTestCase):
     def setUp(self):
-        self.browser = webdriver.Firefox()
+        self.browser = webdriver.Chrome('./chromedriver')
         self.browser.implicitly_wait(3)
 
     def tearDown(self):
@@ -33,9 +33,11 @@ class NewVisitorTest(LiveServerTestCase):
         # She types "Buy shoes from DSW" into a text box
         inputbox.send_keys('Buy shoes from DSW')
     
-        # When she hits enter, the page updates, and now the page lists
-        # "1: Buy shoes from DSW" as an item in a to-do list
+        # When she hits enter, she is taken to a new URL, and now the page lists
+        # "1: Buy shoes from DSW" as an item in a to-do list table
         inputbox.send_keys(Keys.ENTER)
+        kellys_list_url = self.browser.current_url
+        self.assertRegex(kellys_list_url, '/lists/.+')
         self.check_for_row_in_list_table('1: Buy shoes from DSW')
 
         # There is still a text box inviting her to add another item. 
@@ -48,12 +50,34 @@ class NewVisitorTest(LiveServerTestCase):
         self.check_for_row_in_list_table('1: Buy shoes from DSW')
         self.check_for_row_in_list_table('2: Pack new shoes for Vegas trip')
 
-        # Kelly wonders whether the site will remember her list.
-        # Then she sees that the site has generated a unique URL for her
-        # There is some explanatory text to that effect.
-        self.fail('Finish the test!')
+        # Now a new user, Kendal, comes along to the site.
 
-        # She visits that URL - her to-do list is still there.
+        ## Use a new browser session to make sure that no information
+        ## of Kelly's is coming through from cookies etc
+        self.browser.quit()
+        self.browser = webdriver.Chrome('./chromedriver')
 
-        # Satisfied, she goes back to watchin Orange Black
+        # Kendal visits the home page.  There is no sign of Kelly's list
+        self.browser.get(self.live_server_url)
+        page_text = self.browser.find_element_by_tag_name('body').text
+        self.assertNotIn('Buy shoes from DSW', page_text)
+        self.assertNotIn('Vegas trip', page_text)
+
+        # Kendal start a new list by entering a new item.  
+        inputbox = self.browser.find_element_by_id('id_new_item')
+        inputbox.send_keys('Watch Dora')
+        inputbox.send_keys(Keys.ENTER)
+
+        # Kendal gets her own unique URL
+        kendals_list_url = self.browser.current_url
+        self.assertRegex(kendals_list_url, '/lists/.+')
+        self.assertNotEqual(kendals_list_url, kellys_list_url)
+
+        # Again, there is no trace of Kelly's list
+        page_text = self.browser.find_element_by_tag_name('body').text
+        self.assertNotIn('Buy shoes from DSW', page_text)
+        self.assertIn('Watch Dora', page_text)
+
+        # Satisfied, they both go back to sleep        
+
 
