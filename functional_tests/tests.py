@@ -1,10 +1,10 @@
-from django.contrib.staticfiles.testing import StaticLiveServerCase
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import sys
 import unittest
 
-class NewVisitorTest(StaticLiveServerCase):
+class NewVisitorTest(StaticLiveServerTestCase):
     @classmethod
     def setUpClass(cls):
         for arg in sys.argv:
@@ -14,6 +14,7 @@ class NewVisitorTest(StaticLiveServerCase):
         super().setUpClass()
         cls.server_url = cls.live_server_url
 
+    @classmethod
     def tearDownClass(cls):
         if cls.server_url == cls.live_server_url:
             super().tearDownClass()
